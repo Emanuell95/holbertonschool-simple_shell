@@ -1,39 +1,59 @@
 #include "shell.h"
 
-void execute_command(char *line)
+int main(void)
 {
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t nread;
     char *args[MAX_ARGS];
-    int i = 0;
     pid_t pid;
 
-    /* Parse the input line into arguments */
-    args[i] = strtok(line, " ");
-    while (args[i] != NULL && i < MAX_ARGS - 1)
-    {
-        i++;
-        args[i] = strtok(NULL, " ");
-    }
-    args[i] = NULL; /* Null-terminate the arguments array */
+    while (1) {
+        int i = 0;
+        printf("simple_shell ");  /* Prompt for input */
 
-    if (args[0] == NULL)
-        return; /* No command entered */
+        nread = getline(&line, &len, stdin);
+        if (nread == -1) {  /* End of input (Ctrl+D) */
+            printf("\n");
+            break;
+        }
 
-    /* Fork a child process to execute the command */
-    pid = fork();
-    if (pid == 0) /* Child process */
-    {
-        if (execve(args[0], args, environ) == -1)
-        {
-            perror("./hsh");
+        line[nread - 1] = '\0';  /* Remove newline character */
+        args[i] = strtok(line, " ");
+        while (args[i] != NULL) {
+            i++;
+            args[i] = strtok(NULL, " ");
+        }
+
+        if (args[0] == NULL)
+            continue;  /* Ignore empty input */
+
+        /* Handle built-in commands */
+        if (handle_builtins(args) == 1) {
+            free(line);
+            exit(0);  /* Exit the shell when 'exit' is called */
+        }
+
+        /* Execute external commands */
+        pid = fork();
+        if (pid == 0) {  /* Child process */
+            char *command_path = get_path(args[0]);
+            if (command_path != NULL) {
+                if (execve(command_path, args, environ) == -1) {
+                    perror("./hsh");
+                }
+            } else {
+                fprintf(stderr, "Command not found: %s\n", args[0]);
+            }
             exit(EXIT_FAILURE);
+        } else if (pid < 0) {
+            perror("fork");
+        } else {  /* Parent process */
+            wait(NULL);
         }
     }
-    else if (pid < 0) /* Fork failed */
-    {
-        perror("fork");
-    }
-    else /* Parent process */
-    {
-        wait(NULL); /* Wait for the child process to finish */
-    }
+
+    free(line);  /* Free memory after loop ends */
+    return 0;
 }
+

@@ -17,5 +17,6 @@ extern char **environ;
 void execute_command(char *line);
 int handle_builtins(char **argv);
 int _strcmp(const char *s1, const char *s2);
+char *get_path(const char *command);
 
 #endif
