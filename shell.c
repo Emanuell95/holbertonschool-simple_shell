@@ -93,7 +93,11 @@ int main(void) {
             }
             continue; /* Avoid further processing */
         }
-
+        
+           if (access(args[0], X_OK) != 0) {
+           fprintf(stderr, "Command not found or not executable: %s\n", args[0]);
+           continue; 
+}
         /* Execute external commands */
         pid = fork();
         if (pid == 0) { /* Child process */
