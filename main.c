@@ -1,59 +1,107 @@
 #include "shell.h"
 
+/**
+ * get_user_input - Prompts the user and reads the input.
+ * @line: Pointer to the input line.
+ * @args: Array to store the tokenized arguments.
+ * Return: 0 if successful, -1 if end of input is reached.
+ */
+int get_user_input(char **line, char *args[MAX_ARGS])
+{
+	size_t len = 0;
+	ssize_t nread;
+	int i = 0;
+
+	printf("simple_shell ");
+	nread = getline(line, &len, stdin);
+	if (nread == -1)
+	{
+		printf("\n");
+		return (-1);
+	}
+
+	(*line)[nread - 1] = '\0';  /* Remove newline */
+	args[i] = strtok(*line, " ");
+	while (args[i] != NULL)
+	{
+		i++;
+		args[i] = strtok(NULL, " ");
+	}
+	return (0);
+}
+
+/**
+ * execute_builtin_command - Executes built-in commands.
+ * @args: Array of arguments.
+ * Return: 1 if 'exit' is called, 0 otherwise.
+ */
+int execute_builtin_command(char *args[MAX_ARGS])
+{
+	if (handle_builtins(args) == 1)
+		return (1);
+	return (0);
+}
+
+/**
+ * create_process - Forks a process and executes external commands.
+ * @args: Array of arguments.
+ */
+void create_process(char *args[MAX_ARGS])
+{
+	pid_t pid = fork();
+
+	if (pid == 0)  /* Child process */
+	{
+		char *command_path = get_path(args[0]);
+
+		if (command_path != NULL)
+		{
+			if (execve(command_path, args, environ) == -1)
+				perror("./hsh");
+		}
+		else
+		{
+			fprintf(stderr, "Command not found: %s\n", args[0]);
+		}
+		exit(EXIT_FAILURE);
+	}
+	else if (pid < 0)  /* Error forking */
+	{
+		perror("fork");
+	}
+	else  /* Parent process */
+	{
+		wait(NULL);
+	}
+}
+
+/**
+ * main - Entry point of the shell program.
+ * Return: 0 on success.
+ */
 int main(void)
 {
-    char *line = NULL;
-    size_t len = 0;
-    ssize_t nread;
-    char *args[MAX_ARGS];
-    pid_t pid;
+	char *line = NULL;
+	char *args[MAX_ARGS];
 
-    while (1) {
-        int i = 0;
-        printf("simple_shell ");  /* Prompt for input */
+	while (1)
+	{
+		if (get_user_input(&line, args) == -1)
+			break;
 
-        nread = getline(&line, &len, stdin);
-        if (nread == -1) {  /* End of input (Ctrl+D) */
-            printf("\n");
-            break;
-        }
+		if (args[0] == NULL)
+			continue;
 
-        line[nread - 1] = '\0';  /* Remove newline character */
-        args[i] = strtok(line, " ");
-        while (args[i] != NULL) {
-            i++;
-            args[i] = strtok(NULL, " ");
-        }
+		if (execute_builtin_command(args) == 1)
+		{
+			free(line);
+			exit(0);
+		}
 
-        if (args[0] == NULL)
-            continue;  /* Ignore empty input */
+		create_process(args);
+	}
 
-        /* Handle built-in commands */
-        if (handle_builtins(args) == 1) {
-            free(line);
-            exit(0);  /* Exit the shell when 'exit' is called */
-        }
-
-        /* Execute external commands */
-        pid = fork();
-        if (pid == 0) {  /* Child process */
-            char *command_path = get_path(args[0]);
-            if (command_path != NULL) {
-                if (execve(command_path, args, environ) == -1) {
-                    perror("./hsh");
-                }
-            } else {
-                fprintf(stderr, "Command not found: %s\n", args[0]);
-            }
-            exit(EXIT_FAILURE);
-        } else if (pid < 0) {
-            perror("fork");
-        } else {  /* Parent process */
-            wait(NULL);
-        }
-    }
-
-    free(line);  /* Free memory after loop ends */
-    return 0;
+	free(line);
+	return (0);
 }
 
