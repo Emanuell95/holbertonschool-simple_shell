@@ -8,8 +8,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <limits.h>
-
-#define MAX_ARGS 100
+#define MAX_ARGS 64
 
 extern char **environ;
 
