@@ -19,10 +19,9 @@ int parse_args(char *line, char *args[])
 	}
 	args[i] = NULL;
 
-<<<<<<< HEAD
     while (1) {
         int i = 0;  /* Declare variables at the top */
-        printf("simple_shell ");  /* Executable statement follows declarations */
+        printf("shell ");  /* Executable statement follows declarations */
 
         nread = getline(&line, &len, stdin);
         if (nread == -1) {  /* End of input (Ctrl+D) */
@@ -120,9 +119,8 @@ int parse_args(char *line, char *args[])
 
     free(line);  /* Free memory after loop ends */
     return 0;
-=======
+
 	return (i);
->>>>>>> 6f5a319e34d2ca544110c4391f756993197440ca
 }
 
 /**
