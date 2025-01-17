@@ -1,5 +1,5 @@
 #include "shell.h"
-//this is a comment
+
 /**
  * parse_args - Parse the input line into arguments.
  * @line: The input command line.
