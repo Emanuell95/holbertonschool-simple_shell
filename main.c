@@ -8,26 +8,30 @@
  */
 int get_user_input(char **line, char *args[MAX_ARGS])
 {
-	size_t len = 0;
-	ssize_t nread;
-	int i = 0;
+    size_t len = 0;
+    ssize_t nread;
+    int i = 0;
 
-	printf("simple_shell ");
-	nread = getline(line, &len, stdin);
-	if (nread == -1)
-	{
-		printf("\n");
-		return (-1);
-	}
+    
+    if (isatty(STDIN_FILENO))
+        printf("simple_shell ");
+    
+    nread = getline(line, &len, stdin);
+    if (nread == -1)
+    {
+        if (isatty(STDIN_FILENO))
+            printf("\n");
+        return (-1);
+    }
 
-	(*line)[nread - 1] = '\0';  /* Remove newline */
-	args[i] = strtok(*line, " ");
-	while (args[i] != NULL)
-	{
-		i++;
-		args[i] = strtok(NULL, " ");
-	}
-	return (0);
+    (*line)[nread - 1] = '\0';  /* Remove newline */
+    args[i] = strtok(*line, " ");
+    while (args[i] != NULL)
+    {
+        i++;
+        args[i] = strtok(NULL, " ");
+    }
+    return (0);
 }
 
 /**
@@ -37,9 +41,9 @@ int get_user_input(char **line, char *args[MAX_ARGS])
  */
 int execute_builtin_command(char *args[MAX_ARGS])
 {
-	if (handle_builtins(args) == 1)
-		return (1);
-	return (0);
+    if (handle_builtins(args) == 1)
+        return (1);
+    return (0);
 }
 
 /**
@@ -48,31 +52,31 @@ int execute_builtin_command(char *args[MAX_ARGS])
  */
 void create_process(char *args[MAX_ARGS])
 {
-	pid_t pid = fork();
+    pid_t pid = fork();
 
-	if (pid == 0)  /* Child process */
-	{
-		char *command_path = get_path(args[0]);
+    if (pid == 0)  /* Child process */
+    {
+        char *command_path = get_path(args[0]);
 
-		if (command_path != NULL)
-		{
-			if (execve(command_path, args, environ) == -1)
-				perror("./hsh");
-		}
-		else
-		{
-			fprintf(stderr, "Command not found: %s\n", args[0]);
-		}
-		exit(EXIT_FAILURE);
-	}
-	else if (pid < 0)  /* Error forking */
-	{
-		perror("fork");
-	}
-	else  /* Parent process */
-	{
-		wait(NULL);
-	}
+        if (command_path != NULL)
+        {
+            if (execve(command_path, args, environ) == -1)
+                perror("./hsh");
+        }
+        else
+        {
+            fprintf(stderr, "Command not found: %s\n", args[0]);
+        }
+        exit(EXIT_FAILURE);
+    }
+    else if (pid < 0)  /* Error forking */
+    {
+        perror("fork");
+    }
+    else  /* Parent process */
+    {
+        wait(NULL);
+    }
 }
 
 /**
@@ -81,27 +85,26 @@ void create_process(char *args[MAX_ARGS])
  */
 int main(void)
 {
-	char *line = NULL;
-	char *args[MAX_ARGS];
+    char *line = NULL;
+    char *args[MAX_ARGS];
 
-	while (1)
-	{
-		if (get_user_input(&line, args) == -1)
-			break;
+    while (1)
+    {
+        if (get_user_input(&line, args) == -1)
+            break;
 
-		if (args[0] == NULL)
-			continue;
+        if (args[0] == NULL)
+            continue;
 
-		if (execute_builtin_command(args) == 1)
-		{
-			free(line);
-			exit(0);
-		}
+        if (execute_builtin_command(args) == 1)
+        {
+            free(line);
+            exit(0);
+        }
 
-		create_process(args);
-	}
+        create_process(args);
+    }
 
-	free(line);
-	return (0);
+    free(line);
+    return (0);
 }
-
